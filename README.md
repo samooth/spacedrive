@@ -14,7 +14,7 @@ npm install spacedrive
 
 ```js
 const Spacedrive = require('spacedrive')
-const Corestore = require('corestore')
+const Corestore = require('spacecorestore')
 
 const store = new Corestore('./storage')
 const drive = new Spacedrive(store)
