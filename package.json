@@ -1,6 +1,6 @@
 {
   "name": "spacedrive",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Spacedrive is a secure, real-time distributed file system",
   "main": "index.js",
   "files": [
