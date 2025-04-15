@@ -1,23 +1,23 @@
-# Hyperdrive
+# Spacedrive
 
-[See API docs at docs.pears.com](https://docs.pears.com/building-blocks/hyperdrive)
+[See API docs at docs.pears.com](https://docs.space.bsv.direct/building-blocks/spacedrive)
 
-Hyperdrive is a secure, real-time distributed file system
+Spacedrive is a secure, real-time distributed file system
 
 ## Install
 
 ```sh
-npm install hyperdrive
+npm install spacedrive
 ```
 
 ## Usage
 
 ```js
-const Hyperdrive = require('hyperdrive')
+const Spacedrive = require('spacedrive')
 const Corestore = require('corestore')
 
 const store = new Corestore('./storage')
-const drive = new Hyperdrive(store)
+const drive = new Spacedrive(store)
 
 await drive.put('/blob.txt', Buffer.from('example'))
 await drive.put('/images/logo.png', Buffer.from('..'))
@@ -50,9 +50,9 @@ ws.once('close', () => console.log('file saved'))
 
 ## API
 
-#### `const drive = new Hyperdrive(store, [key])`
+#### `const drive = new Spacedrive(store, [key])`
 
-Creates a new Hyperdrive instance. `store` must be an instance of `Corestore`.
+Creates a new Spacedrive instance. `store` must be an instance of `Corestore`.
 
 By default it uses the core at `{ name: 'db' }` from `store`, unless you set the public `key`.
 
@@ -64,7 +64,7 @@ Use it once before reading synchronous properties like `drive.discoveryKey`, unl
 
 #### `await drive.close()`
 
-Fully close this drive, including its underlying Hypercore backed datastructures.
+Fully close this drive, including its underlying Spacecore backed datastructures.
 
 #### `drive.corestore`
 
@@ -72,11 +72,11 @@ The Corestore instance used as storage.
 
 #### `drive.db`
 
-The underlying Hyperbee backing the drive file structure.
+The underlying Spacebee backing the drive file structure.
 
 #### `drive.core`
 
-The Hypercore used for `drive.db`.
+The Spacecore used for `drive.db`.
 
 #### `drive.id`
 
@@ -84,17 +84,17 @@ String containing the id (z-base-32 of the public key) identifying this drive.
 
 #### `drive.key`
 
-The public key of the Hypercore backing the drive.
+The public key of the Spacecore backing the drive.
 
 #### `drive.discoveryKey`
 
-The hash of the public key of the Hypercore backing the drive.
+The hash of the public key of the Spacecore backing the drive.
 
-Can be used as a `topic` to seed the drive using Hyperswarm.
+Can be used as a `topic` to seed the drive using Spaceswarm.
 
 #### `drive.contentKey`
 
-The public key of the [Hyperblobs](https://github.com/holepunchto/hyperblobs) instance holding blobs associated with entries in the drive.
+The public key of the [Spaceblobs](https://github.com/samooth/spaceblobs) instance holding blobs associated with entries in the drive.
 
 #### `drive.writable`
 
@@ -140,7 +140,7 @@ Returns the entry at `path` in the drive. It looks like this:
   value: {
     executable: Boolean, // Whether the blob at path is an executable
     linkname: null, // If entry not symlink, otherwise a string to the entry this links to
-    blob: { // Hyperblobs id that can be used to fetch the blob associated with this entry
+    blob: { // Spaceblobs id that can be used to fetch the blob associated with this entry
       blockOffset: Number,
       blockLength: Number,
       byteOffset: Number,
@@ -196,7 +196,7 @@ Deletes all the blobs from storage to free up space, similar to how `drive.clear
 
 #### `await drive.truncate(version, [options] })`
 
-Truncates the Hyperdrive to a previous version (both the file-structure reference and the blobs).
+Truncates the Spacedrive to a previous version (both the file-structure reference and the blobs).
 
 A `blobs: <length>` option can be passed in if you know the corresponding blobs length, but it is recommended to let the method figure it out for you.
 
@@ -212,7 +212,7 @@ If a blob entry currently exists at `path` then it will get overwritten and `dri
 
 #### `const batch = drive.batch()`
 
-Useful for atomically mutate the drive, has the same interface as Hyperdrive.
+Useful for atomically mutate the drive, has the same interface as Spacedrive.
 
 #### `await batch.flush()`
 
@@ -246,11 +246,11 @@ Returns a stream of all subpaths of entries in drive stored at paths prefixed by
 
 Returns a read stream of entries in the drive.
 
-`options` are the same as `Hyperbee().createReadStream([range], [options])`.
+`options` are the same as `Spacebee().createReadStream([range], [options])`.
 
 #### `const mirror = drive.mirror(out, [options])`
 
-Efficiently mirror this drive into another. Returns a [`MirrorDrive`](https://github.com/holepunchto/mirror-drive#api) instance constructed with `options`.
+Efficiently mirror this drive into another. Returns a [`MirrorDrive`](https://github.com/samooth/mirror-drive#api) instance constructed with `options`.
 
 Call `await mirror.done()` to wait for the mirroring to finish.
 
@@ -341,7 +341,7 @@ Downloads the entries and blobs stored in the [ranges][core-range-docs] `dbRange
 
 #### `const done = drive.findingPeers()`
 
-Indicate to Hyperdrive that you're finding peers in the background, requests will be on hold until this is done.
+Indicate to Spacedrive that you're finding peers in the background, requests will be on hold until this is done.
 
 Call `done()` when your current discovery iteration is done, i.e. after `swarm.flush()` finishes.
 
@@ -349,7 +349,7 @@ Call `done()` when your current discovery iteration is done, i.e. after `swarm.f
 
 Usage example:
 ```js
-const swarm = new Hyperswarm()
+const swarm = new Spaceswarm()
 const done = drive.findingPeers()
 swarm.on('connection', (socket) => drive.replicate(socket))
 swarm.join(drive.discoveryKey)
@@ -373,7 +373,7 @@ Use `drive.findingPeers()` or `{ wait: true }` to make await `drive.update()` bl
 
 #### `const blobs = await drive.getBlobs()`
 
-Returns the [Hyperblobs](https://github.com/holepunchto/hyperblobs) instance storing the blobs indexed by drive entries.
+Returns the [Spaceblobs](https://github.com/samooth/spaceblobs) instance storing the blobs indexed by drive entries.
 
 ```js
 await drive.put('/file.txt', Buffer.from('hi'))
@@ -387,12 +387,12 @@ const buffer2 = await blobs.get(entry.value.blob)
 // => buffer1 and buffer2 are equals
 ```
 
-[core-range-docs]: https://github.com/holepunchto/hypercore#const-range--coredownloadrange
-[store-replicate-docs]: https://github.com/holepunchto/corestore#const-stream--storereplicateoptsorstream
+[core-range-docs]: https://github.com/samooth/spacecore#const-range--coredownloadrange
+[store-replicate-docs]: https://github.com/samooth/corestore#const-stream--storereplicateoptsorstream
 
 #### `const blobsLength = await drive.getBlobsLength(checkout)`
 
-Returns the length of the Hyperblobs instance at the time of the specified Hyperdrive version (defaults to the current version).
+Returns the length of the Spaceblobs instance at the time of the specified Spacedrive version (defaults to the current version).
 
 ## License
 

@@ -1,5 +1,5 @@
-const Hyperbee = require('hyperbee')
-const Hyperblobs = require('hyperblobs')
+const Spacebee = require('spacebee')
+const Spaceblobs = require('spaceblobs')
 const isOptions = require('is-options')
 const { Writable, Readable } = require('streamx')
 const unixPathResolve = require('unix-path-resolve')
@@ -7,16 +7,16 @@ const MirrorDrive = require('mirror-drive')
 const SubEncoder = require('sub-encoder')
 const ReadyResource = require('ready-resource')
 const safetyCatch = require('safety-catch')
-const crypto = require('hypercore-crypto')
-const Hypercore = require('hypercore')
-const { BLOCK_NOT_AVAILABLE, BAD_ARGUMENT } = require('hypercore-errors')
+const crypto = require('spacecore-crypto')
+const Spacecore = require('bitspacecore')
+const { BLOCK_NOT_AVAILABLE, BAD_ARGUMENT } = require('spacecore-errors')
 const Monitor = require('./lib/monitor')
 
 const keyEncoding = new SubEncoder('files', 'utf-8')
 
-const [BLOBS] = crypto.namespace('hyperdrive', 1)
+const [BLOBS] = crypto.namespace('spacedrive', 1)
 
-module.exports = class Hyperdrive extends ReadyResource {
+module.exports = class Spacedrive extends ReadyResource {
   constructor (corestore, key, opts = {}) {
     super()
 
@@ -55,15 +55,15 @@ module.exports = class Hyperdrive extends ReadyResource {
   }
 
   static getContentKey (m, key) {
-    if (m instanceof Hypercore) {
+    if (m instanceof Spacecore) {
       if (m.core.compat) return null
-      return Hyperdrive.getContentKey(m.manifest, m.key)
+      return Spacedrive.getContentKey(m.manifest, m.key)
     }
 
     const manifest = generateContentManifest(m, key)
     if (!manifest) return null
 
-    return Hypercore.key(manifest)
+    return Spacecore.key(manifest)
   }
 
   _generateBlobsManifest () {
@@ -146,7 +146,7 @@ module.exports = class Hyperdrive extends ReadyResource {
   }
 
   _makeCheckout (snapshot) {
-    return new Hyperdrive(this.corestore, this.key, {
+    return new Spacedrive(this.corestore, this.key, {
       onwait: this._onwait,
       encryptionKey: this.encryptionKey,
       _checkout: this._checkout || this,
@@ -159,7 +159,7 @@ module.exports = class Hyperdrive extends ReadyResource {
   }
 
   batch () {
-    return new Hyperdrive(this.corestore, this.key, {
+    return new Spacedrive(this.corestore, this.key, {
       onwait: this._onwait,
       encryptionKey: this.encryptionKey,
       _checkout: null,
@@ -203,7 +203,7 @@ module.exports = class Hyperdrive extends ReadyResource {
     if (this.blobs) return true
 
     const contentKey = header.metadata && header.metadata.contentFeed && header.metadata.contentFeed.subarray(0, 32)
-    const blobsKey = contentKey || Hypercore.key(this._generateBlobsManifest())
+    const blobsKey = contentKey || Spacecore.key(this._generateBlobsManifest())
     if (!blobsKey || blobsKey.length < 32) throw new Error('Invalid or no Blob store key set')
 
     const blobsCore = this.corestore.get({
@@ -221,7 +221,7 @@ module.exports = class Hyperdrive extends ReadyResource {
       return false
     }
 
-    this.blobs = new Hyperblobs(blobsCore)
+    this.blobs = new Spaceblobs(blobsCore)
 
     this.emit('blobs', this.blobs)
     this.emit('content-key', blobsCore.key)
@@ -252,7 +252,7 @@ module.exports = class Hyperdrive extends ReadyResource {
       })
       await blobsCore.ready()
 
-      this.blobs = new Hyperblobs(blobsCore)
+      this.blobs = new Spaceblobs(blobsCore)
 
       if (!m) getBee(this.db).metadata.contentFeed = this.blobs.core.key
 
@@ -677,7 +677,7 @@ function makeBee (key, corestore, opts = {}) {
   const name = key ? undefined : 'db'
   const core = corestore.get({ key, name, exclusive: true, onwait: opts.onwait, encryptionKey: opts.encryptionKey, compat: opts.compat, active: opts.active })
 
-  return new Hyperbee(core, {
+  return new Spacebee(core, {
     keyEncoding: 'utf-8',
     valueEncoding: 'json',
     metadata: { contentFeed: null }
@@ -685,7 +685,7 @@ function makeBee (key, corestore, opts = {}) {
 }
 
 function getBee (bee) {
-  // A Batch instance will have a .tree property for the actual Hyperbee
+  // A Batch instance will have a .tree property for the actual Spacebee
   return bee.tree || bee
 }
 
@@ -711,7 +711,7 @@ function generateContentManifest (m, key) {
 
   const signers = []
 
-  if (!key) key = Hypercore.key(m)
+  if (!key) key = Spacecore.key(m)
 
   for (const s of m.signers) {
     const namespace = crypto.hash([BLOBS, key, s.namespace])

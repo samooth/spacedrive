@@ -4,14 +4,14 @@ const path = require('path')
 const { once } = require('events')
 const test = require('brittle')
 const Corestore = require('corestore')
-const { discoveryKey } = require('hypercore-crypto')
+const { discoveryKey } = require('../spacecore-crypto')
 const { pipelinePromise: pipeline, Writable, Readable } = require('streamx')
-const testnet = require('hyperdht/testnet')
-const DHT = require('hyperdht')
-const Hyperswarm = require('hyperswarm')
+const testnet = require('../spacedht/testnet')
+const DHT = require('../spacedht')
+const Spaceswarm = require('../spaceswarm')
 const b4a = require('b4a')
 const getTmpDir = require('test-tmp')
-const Hyperdrive = require('./index.js')
+const Spacedrive = require('./index.js')
 
 test('drive.core', async (t) => {
   const { drive } = await testenv(t)
@@ -50,14 +50,14 @@ test('drive.supportsMetadata', async (t) => {
   t.is(true, drive.supportsMetadata)
 })
 
-test('Hyperdrive(corestore, key)', async (t) => {
+test('Spacedrive(corestore, key)', async (t) => {
   t.plan(2)
   const { corestore, drive } = await testenv(t)
   const diskbuf = fs.readFileSync(__filename)
   await drive.put(__filename, diskbuf)
   const bndlbuf = await drive.get(__filename)
   t.is(b4a.compare(diskbuf, bndlbuf), 0)
-  const mirror = new Hyperdrive(corestore.session({ writable: false }), drive.core.key)
+  const mirror = new Spacedrive(corestore.session({ writable: false }), drive.core.key)
   await mirror.ready()
   const mrrrbuf = await mirror.get(__filename)
   t.is(b4a.compare(bndlbuf, mrrrbuf), 0)
@@ -396,8 +396,8 @@ test('watch() basic', async function (t) {
   })
 
   for await (const [current, previous] of watcher) { // eslint-disable-line no-unreachable-loop
-    t.ok(current instanceof Hyperdrive)
-    t.ok(previous instanceof Hyperdrive)
+    t.ok(current instanceof Spacedrive)
+    t.ok(previous instanceof Spacedrive)
     t.is(current.version, 2)
     t.is(previous.version, 1)
     t.alike(await current.get('/a.txt'), buf)
@@ -864,7 +864,7 @@ test('drive.close() on snapshots--does not close parent', async (t) => {
 })
 
 test('drive.batch() on non-ready drive', async (t) => {
-  const drive = new Hyperdrive(new Corestore(await t.tmp()))
+  const drive = new Spacedrive(new Corestore(await t.tmp()))
 
   const batch = drive.batch()
   await batch.put('/x', 'something')
@@ -894,7 +894,7 @@ test('drive.close() with openBlobsFromHeader waiting in the background', async (
 
   const corestore = new Corestore(await t.tmp())
   const disconnectedCoreKey = b4a.from('a'.repeat(64), 'hex')
-  const drive = new Hyperdrive(corestore, disconnectedCoreKey)
+  const drive = new Spacedrive(corestore, disconnectedCoreKey)
 
   await drive.ready()
   t.is(drive.core.length, 0) // Sanity check
@@ -936,7 +936,7 @@ test('blobs with writable drive', async (t) => {
   t.plan(4)
 
   const store = new Corestore(await t.tmp())
-  const drive = new Hyperdrive(store)
+  const drive = new Spacedrive(store)
 
   drive.on('blobs', function (blobs) {
     t.is(blobs, drive.blobs)
@@ -975,11 +975,11 @@ test('drive.clear(path)', async (t) => {
 test.skip('drive.clear(path) with diff', async (t) => {
   const storage = await getTmpDir(t)
 
-  const a = new Hyperdrive(new Corestore(storage))
+  const a = new Spacedrive(new Corestore(storage))
   await a.put('/file', b4a.alloc(4 * 1024))
   await a.close()
 
-  const b = new Hyperdrive(new Corestore(storage))
+  const b = new Spacedrive(new Corestore(storage))
 
   const cleared = await b.clear('/file', { diff: true })
   t.ok(cleared.blocks > 0)
@@ -1018,13 +1018,13 @@ test('drive.clear(path) on a checkout', async (t) => {
 test.skip('drive.clearAll() with diff', async (t) => {
   const storage = await getTmpDir(t)
 
-  const a = new Hyperdrive(new Corestore(storage))
+  const a = new Spacedrive(new Corestore(storage))
   await a.put('/file-1', b4a.alloc(4 * 1024))
   await a.put('/file-2', b4a.alloc(8 * 1024))
   await a.put('/file-3', b4a.alloc(16 * 1024))
   await a.close()
 
-  const b = new Hyperdrive(new Corestore(storage))
+  const b = new Spacedrive(new Corestore(storage))
 
   const cleared = await b.clearAll({ diff: true })
   t.ok(cleared.blocks > 0)
@@ -1070,7 +1070,7 @@ test('drive.exists(key)', async function (t) {
 
 test('basic properties', async function (t) {
   const store = new Corestore(await t.tmp())
-  const drive = new Hyperdrive(store)
+  const drive = new Spacedrive(store)
 
   t.is(typeof drive.findingPeers, 'function')
   t.is(typeof drive.replicate, 'function')
@@ -1102,10 +1102,10 @@ test('basic writable option', async function (t) {
 
   const store = new Corestore(await t.tmp())
 
-  const a = new Hyperdrive(store)
+  const a = new Spacedrive(store)
   await a.put('/file-one', 'hi')
 
-  const b = new Hyperdrive(store.session({ writable: false }), a.key)
+  const b = new Spacedrive(store.session({ writable: false }), a.key)
   await b.ready()
   t.is(b.writable, false)
   t.is(b.blobs.core.writable, false)
@@ -1125,7 +1125,7 @@ test('readdir filenames with dashes', async function (t) {
   t.plan(2)
 
   const store = new Corestore(await t.tmp())
-  const drive = new Hyperdrive(store)
+  const drive = new Spacedrive(store)
 
   await drive.put('/one', 'hi')
   await drive.put('/one-two', 'hi')
@@ -1143,7 +1143,7 @@ test('readdir filenames with dashes (nested)', async function (t) {
   t.plan(2)
 
   const store = new Corestore(await t.tmp())
-  const drive = new Hyperdrive(store)
+  const drive = new Spacedrive(store)
 
   await drive.put('/one/two', 'hi')
   await drive.put('/one-two', 'hi')
@@ -1159,7 +1159,7 @@ test('readdir filenames with dashes (nested)', async function (t) {
 
 test('basic compare', async function (t) {
   const store = new Corestore(await t.tmp())
-  const drive = new Hyperdrive(store)
+  const drive = new Spacedrive(store)
 
   await drive.put('/file.txt', 'hi')
   const a = await drive.entry('/file.txt')
@@ -1182,7 +1182,7 @@ test('basic compare', async function (t) {
 
 test('basic follow entry', async function (t) {
   const store = new Corestore(await t.tmp())
-  const drive = new Hyperdrive(store)
+  const drive = new Spacedrive(store)
 
   await drive.put('/file.txt', 'hi')
   await drive.symlink('/file.shortcut', '/file.txt')
@@ -1205,7 +1205,7 @@ test('basic follow entry', async function (t) {
 
 test('multiple follow entry', async function (t) {
   const store = new Corestore(await t.tmp())
-  const drive = new Hyperdrive(store)
+  const drive = new Spacedrive(store)
 
   await drive.put('/file.txt', 'hi')
   await drive.symlink('/file.shortcut', '/file.txt')
@@ -1229,7 +1229,7 @@ test('multiple follow entry', async function (t) {
 
 test('max follow entry', async function (t) {
   const store = new Corestore(await t.tmp())
-  const drive = new Hyperdrive(store)
+  const drive = new Spacedrive(store)
 
   await drive.put('/file.0.txt', 'hi')
 
@@ -1253,7 +1253,7 @@ test('max follow entry', async function (t) {
 
 test('non-existing follow entry', async function (t) {
   const store = new Corestore(await t.tmp())
-  const drive = new Hyperdrive(store)
+  const drive = new Spacedrive(store)
 
   await drive.put('/file.txt', 'hi')
 
@@ -1393,7 +1393,7 @@ test('drive peek with get() and timeout', async (t) => {
 
 test('non-compat making of cores', async (t) => {
   const corestore = new Corestore(await t.tmp())
-  const drive = new Hyperdrive(corestore, { compat: false })
+  const drive = new Spacedrive(corestore, { compat: false })
 
   await drive.ready()
 
@@ -1405,7 +1405,7 @@ test('non-compat making of cores', async (t) => {
 
 test('getBlobsLength happy paths', async t => {
   const corestore = new Corestore(await t.tmp())
-  const drive = new Hyperdrive(corestore.session())
+  const drive = new Spacedrive(corestore.session())
 
   await drive.put('./file', 'here')
   t.is(await drive.getBlobsLength(), 1, 'Correct blobs length 1')
@@ -1423,14 +1423,14 @@ test('getBlobsLength happy paths', async t => {
 test('getBlobsLength when not ready', async t => {
   const corestore = new Corestore(await t.tmp())
   {
-    const drive = new Hyperdrive(corestore.session())
+    const drive = new Spacedrive(corestore.session())
     await drive.put('./file', 'here')
     await drive.put('./more', 'here')
     await drive.close()
   }
 
   {
-    const drive = new Hyperdrive(corestore)
+    const drive = new Spacedrive(corestore)
     const length = await drive.getBlobsLength()
     t.is(length, 2, 'correct blobs length')
     await drive.close()
@@ -1439,7 +1439,7 @@ test('getBlobsLength when not ready', async t => {
 
 test('getBlobsLength of empty drive', async t => {
   const corestore = new Corestore(await t.tmp())
-  const drive = new Hyperdrive(corestore.session())
+  const drive = new Spacedrive(corestore.session())
   const length = await drive.getBlobsLength()
   t.is(length, 0, 'empty drive has blobsLength 0')
 
@@ -1449,7 +1449,7 @@ test('getBlobsLength of empty drive', async t => {
 
 test('truncate happy path', async t => {
   const corestore = new Corestore(await t.tmp())
-  const drive = new Hyperdrive(corestore.session())
+  const drive = new Spacedrive(corestore.session())
   await drive.ready()
 
   t.is(drive.db.core.fork, 0, 'sanity check')
@@ -1484,7 +1484,7 @@ test('truncate happy path', async t => {
 
 test('truncate throws when truncating future version)', async t => {
   const corestore = new Corestore(await t.tmp())
-  const drive = new Hyperdrive(corestore)
+  const drive = new Spacedrive(corestore)
 
   await drive.put('./file', 'here')
   await t.exception(
@@ -1500,8 +1500,8 @@ test('truncate throws when truncating future version)', async t => {
 test('get drive key without using the constructor', async (t) => {
   t.plan(1)
   const corestore = new Corestore(await t.tmp())
-  const key = await Hyperdrive.getDriveKey(corestore.session())
-  const drive = new Hyperdrive(corestore.session())
+  const key = await Spacedrive.getDriveKey(corestore.session())
+  const drive = new Spacedrive(corestore.session())
 
   t.teardown(() => {
     corestore.close()
@@ -1647,20 +1647,20 @@ async function testenv (t) {
   const corestore = new Corestore(await t.tmp())
   await corestore.ready()
 
-  const drive = new Hyperdrive(corestore)
+  const drive = new Spacedrive(corestore)
   await drive.ready()
   teardown(drive.close.bind(drive))
 
   const net = await testnet(2, { teardown })
   const { bootstrap } = net
-  const swarm = new Hyperswarm({ dht: new DHT({ bootstrap }) })
+  const swarm = new Spaceswarm({ dht: new DHT({ bootstrap }) })
   teardown(swarm.destroy.bind(swarm))
 
   const mirror = {}
-  mirror.swarm = new Hyperswarm({ dht: new DHT({ bootstrap }) })
+  mirror.swarm = new Spaceswarm({ dht: new DHT({ bootstrap }) })
   teardown(mirror.swarm.destroy.bind(mirror.swarm))
   mirror.corestore = new Corestore(await t.tmp())
-  mirror.drive = new Hyperdrive(mirror.corestore, drive.key)
+  mirror.drive = new Spacedrive(mirror.corestore, drive.key)
   await mirror.drive.ready()
   teardown(mirror.drive.close.bind(mirror.drive))
 

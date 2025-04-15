@@ -1,7 +1,7 @@
 {
-  "name": "hyperdrive",
-  "version": "12.0.1",
-  "description": "Hyperdrive is a secure, real-time distributed file system",
+  "name": "spacedrive",
+  "version": "0.0.1",
+  "description": "Spacedrive is a secure, real-time distributed file system",
   "main": "index.js",
   "files": [
     "index.js",
@@ -9,22 +9,25 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/holepunchto/hyperdrive.git"
+    "url": "git+https://github.com/samooth/spacedrive.git"
   },
   "scripts": {
     "test": "standard && brittle test.js"
   },
   "author": "Holepunch",
+  "contributors": [
+    {
+      "name": "Tomás Díaz",
+      "email": "tomas@bsv.direct",
+      "url": "https://bsv.direct"
+    }
+  ],  
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/holepunchto/hyperdrive/issues"
+    "url": "https://github.com/samooth/spacedrive/issues"
   },
-  "homepage": "https://github.com/holepunchto/hyperdrive#readme",
+  "homepage": "https://github.com/holepunchto/spacedrive#readme",
   "dependencies": {
-    "hyperbee": "^2.11.1",
-    "hyperblobs": "^2.3.0",
-    "hypercore": "^11.0.0",
-    "hypercore-errors": "^1.0.0",
     "is-options": "^1.0.2",
     "mirror-drive": "^1.2.0",
     "ready-resource": "^1.0.0",
@@ -38,9 +41,6 @@
     "b4a": "^1.6.0",
     "brittle": "^3.1.0",
     "corestore": "^7.0.0",
-    "hypercore-crypto": "^3.4.0",
-    "hyperdht": "^6.6.0",
-    "hyperswarm": "^4.0.0",
     "standard": "^17.0.0",
     "test-tmp": "^1.3.0"
   }
